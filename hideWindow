@@ -5,6 +5,11 @@ const fs = require('fs')
 const configFile = `${__dirname}/hideWindowConfig.json`;
 const hiddenDesktop = '2'
 
+
+/**********************************************************************
+ * UTILITY FUNCTIONS
+ **********************************************************************/
+
 const utils = {
 	data: {
 		timeInMilliSeconds: 400
@@ -27,20 +32,37 @@ function sendNotification(message, timeInMilliSeconds = false) {
 	}
 }
 
-function setPanelBGColor(desktopNumber){
-	let desktopMap = {
-		'0': 'default',
-		'1': 'work',
-		'2': 'hidden'
+function decideIndex(obj) {
+	let isNotEmpty = JSON.stringify(obj) !== '{}'
+	if (Boolean(obj) && isNotEmpty) {
+		let lastIndex = Object.keys(obj)[Object.keys(obj).length - 1]
+		let nextIndex = parseInt(lastIndex) + 1
+		return nextIndex.toString()
+	} else {
+		return '0';
+	}
+}
+
+function getLayout() {
+	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
+	const desktopTable = { "0": {}, "1": {}, "2": {}, }
+	let data = execSync('wmctrl -l', { encoding: 'utf8' })
+	let lines = data.split("\n")
+
+	for (let key in lines) {
+		let windowInfoArray = lines[key].split(' ');
+		let windowName = windowInfoArray[windowInfoArray.length - 1]
+		if (windowsToIgnore.includes(windowName) || !Boolean(windowName)) continue;
+		let windowId = windowInfoArray[0]
+		let desktopNumber = windowInfoArray[2]
+		let index = decideIndex(desktopTable[desktopNumber])
+		desktopTable[desktopNumber][index] = {
+			"windowId": windowId,
+			"windowName": windowName
+		};
 	}
 
-	let BGMap = {
-		'hidden':'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.5 -t double -s 0.0 -t double -s 0.0 -t double -s 1.0',
-		'work':'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.196078 -t double -s 0.050980 -t double -s 0.243137 -t double -s 1.000000',
-		'default':'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.117647 -t double -s 0.317647 -t double -s 0.156863 -t double -s 1.000000'
-	}
-		
-	execSync(BGMap[desktopMap[desktopNumber]]);
+	return desktopTable
 }
 
 function turnOnRedshift() {
@@ -49,6 +71,22 @@ function turnOnRedshift() {
 
 function turnOffRedshift() {
 	execSync("redshift -x")
+}
+
+function setPanelBGColor(desktopNumber) {
+	let desktopMap = {
+		'0': 'default',
+		'1': 'work',
+		'2': 'hidden'
+	}
+
+	let BGMap = {
+		'hidden': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.5 -t double -s 0.0 -t double -s 0.0 -t double -s 1.0',
+		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
+		'default': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.290000 -t double -s 0.007733 -t double -s 0.007733 -t double -s 1.000000'
+	}
+
+	execSync(BGMap[desktopMap[desktopNumber]]);
 }
 
 function getConfigData() {
@@ -67,36 +105,11 @@ function updateConfigField(fieldName, data) {
 }
 
 
-function decideIndex(obj) {
-	let isNotEmpty = JSON.stringify(obj) !== '{}'
-	if (Boolean(obj) && isNotEmpty) {
-		let lastIndex = Object.keys(obj)[Object.keys(obj).length - 1]
-		let nextIndex = parseInt(lastIndex) + 1
-		return nextIndex.toString()
-	} else {
-		return '0';
-	}
-}
 
-function getLayout() {
-	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
-	const desktopTable = { "0": {}, "1": {}, "2": {}, }
-	let data = execSync('wmctrl -l', { encoding: 'utf8' })
-	let lines = data.split("\n")
-	for (let key in lines) {
-		let windowInfoArray = lines[key].split(' ');
-		let windowName = windowInfoArray[windowInfoArray.length - 1]
-		if (windowsToIgnore.includes(windowName) || !Boolean(windowName)) continue;
-		let windowId = windowInfoArray[0]
-		let desktopNumber = windowInfoArray[2]
-		let index = decideIndex(desktopTable[desktopNumber])
-		desktopTable[desktopNumber][index] = {
-			"windowId": windowId,
-			"windowName": windowName
-		};
-	}
-	return desktopTable
-}
+/**********************************************************************
+ * ACTION(need to think of a better name) FUNCTIONS
+ **********************************************************************/
+
 
 
 function getActiveWindowId() {
@@ -159,13 +172,40 @@ function unhideWindow(windowId) {
 	execSync(command);
 }
 
+
 function unhideAllWindows() {
 	let layout = getLayout();
 	let hiddenWindowArray = layout['2']
+	sendNotification('RESTORING WINDOWS');
 	for (let key in hiddenWindowArray) {
 		unhideWindow(hiddenWindowArray[key].windowId)
 	}
-	console.log(hiddenWindowArray);
+	sendNotification('WINDOWS RESTORED SUCCESSFULLY')
+}
+
+function hideWindowById(windowId) {
+	command = `wmctrl -i -r '${windowId}' -t ${hiddenDesktop}`
+	execSync(command);
+}
+
+function hideAllWindowsOnCurrentDesktop() {
+	let activeDesktop = getActiveDesktop()
+
+	if (activeDesktop === hiddenDesktop) {
+		//do nothing
+		sendNotification('that action is prohibited on the hidden workspace')
+		return;
+	} else {
+		let desktopLayout = getLayout();
+		let windowList = desktopLayout[activeDesktop]
+		sendNotification('HIDING WINDOWS')
+		for (let key in windowList) {
+			let id = windowList[key].windowId
+			hideWindowById(id)
+		}
+		sendNotification('WINDOWS HIDDEN SUCCESSFULLY')
+	}
+
 }
 
 function switchDesktop() {
@@ -228,11 +268,7 @@ function changeActiveWindowDesktop() {
 	
 		let destination = desktopToMoveTo[activeDesktop]
 		let moveWindow = `wmctrl -i -r '${activeWindowId}' -t ${destination}`;
-		let moveDesktop = `wmctrl -i -a ${activeWindowId}`;
-		console.log({ moveDesktop })
 		execSync(moveWindow)
-		switchDesktop()
-		execSync(moveDesktop)
 	}
 }
 
@@ -257,7 +293,8 @@ function init() {
 			"unhide_all": unhideAllWindows,
 			"change_window_desktop": changeActiveWindowDesktop,
 			"show_hidden_count": listNumberOfHiddenWindows,
-			"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace
+			"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace,
+			"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop
 		}
 
 		let functionToRun = functionMapping[argument]
