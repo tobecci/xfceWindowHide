@@ -208,6 +208,19 @@ function hideAllWindowsOnCurrentDesktop() {
 
 }
 
+function maximizeAllWindowsOnCurrentDesktop() {
+	let activeDesktop = getActiveDesktop()
+	let desktopLayout = getLayout();
+	let windowList = desktopLayout[activeDesktop]
+	sendNotification('MAXIMIZING WINDOWS')
+	for (let key in windowList) {
+		let id = windowList[key].windowId
+		let command = `wmctrl -i -r ${id} -b add,maximized_vert,maximized_horz`
+		execSync(command)
+	}
+	sendNotification('DONE MAXIMIZING WINDOWS')
+}
+
 function switchDesktop() {
 	let activeDesktop = getActiveDesktop();
 
@@ -294,7 +307,8 @@ function init() {
 			"change_window_desktop": changeActiveWindowDesktop,
 			"show_hidden_count": listNumberOfHiddenWindows,
 			"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace,
-			"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop
+			"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop,
+			"maximize_all_windows_on_current_desktop": maximizeAllWindowsOnCurrentDesktop
 		}
 
 		let functionToRun = functionMapping[argument]
