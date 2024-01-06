@@ -80,9 +80,12 @@ function setPanelBGColor(desktopNumber) {
 		'2': 'hidden'
 	}
 
+	// work green color
+	// 'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
+	
 	let BGMap = {
 		'hidden': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.5 -t double -s 0.0 -t double -s 0.0 -t double -s 1.0',
-		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
+		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.000000 -t double -s 1.000000',
 		'default': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.290000 -t double -s 0.007733 -t double -s 0.007733 -t double -s 1.000000'
 	}
 
@@ -156,7 +159,7 @@ function hideActiveWindow() {
 
 	//if on hidden desktop, unhide instead
 	if (activeDesktop === hiddenDesktop) {
-		command = `wmctrl -i -r '${activeWindowId}' -t 0`
+		command = `wmctrl -i -r '${activeWindowId}' -t 1`
 		execSync(command);
 		sendNotification('window restored successfully')
 	} else {
