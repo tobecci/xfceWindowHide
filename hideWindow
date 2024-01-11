@@ -66,7 +66,7 @@ function getLayout() {
 }
 
 function turnOnRedshift() {
-	execSync("redshift -O 2500")
+	execSync("redshift -O 1500")
 }
 
 function turnOffRedshift() {
@@ -79,15 +79,19 @@ function setPanelBGColor(desktopNumber) {
 		'1': 'work',
 		'2': 'hidden'
 	}
-
-	// work green color
-	// 'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
 	
 	let BGMap = {
-		'hidden': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.5 -t double -s 0.0 -t double -s 0.0 -t double -s 1.0',
-		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.000000 -t double -s 1.000000',
-		'default': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.290000 -t double -s 0.007733 -t double -s 0.007733 -t double -s 1.000000'
+		'default': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.290000 -t double -s 0.007733 -t double -s 0.007733 -t double -s 0.600000',
+
+		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.700000',
+
+		'hidden': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.366667 -t double -s 0.313149 -t double -s 0.007333 -t double -s 0.500000',
+
+		
 	}
+
+	//                
+
 
 	execSync(BGMap[desktopMap[desktopNumber]]);
 }
@@ -211,6 +215,15 @@ function hideAllWindowsOnCurrentDesktop() {
 
 }
 
+function maximizeSingleWindowById(id) {
+	let commandToFocusWindow = `wmctrl -i -a ${id}`
+	execSync(commandToFocusWindow)
+	let commandToUnMaximize = `wmctrl -i -r ${id} -b remove,maximized_vert,maximized_horz`
+	execSync(commandToUnMaximize)
+	let commandToMaximize = `wmctrl -i -r ${id} -b add,maximized_vert,maximized_horz`
+	execSync(commandToMaximize)
+}
+
 function maximizeAllWindowsOnCurrentDesktop() {
 	let activeDesktop = getActiveDesktop()
 	let desktopLayout = getLayout();
@@ -218,8 +231,7 @@ function maximizeAllWindowsOnCurrentDesktop() {
 	sendNotification('MAXIMIZING WINDOWS')
 	for (let key in windowList) {
 		let id = windowList[key].windowId
-		let command = `wmctrl -i -r ${id} -b add,maximized_vert,maximized_horz`
-		execSync(command)
+		maximizeSingleWindowById(id)
 	}
 	sendNotification('DONE MAXIMIZING WINDOWS')
 }
@@ -343,3 +355,6 @@ init();
 
 //command to maximize windows
 // wmctrl -i -r <window_id> -b add,maximized_vert,maximized_horz
+
+// work green color
+	// 'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
