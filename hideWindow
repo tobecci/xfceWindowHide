@@ -229,10 +229,17 @@ function maximizeAllWindowsOnCurrentDesktop() {
 	let desktopLayout = getLayout();
 	let windowList = desktopLayout[activeDesktop]
 	sendNotification('MAXIMIZING WINDOWS')
-	for (let key in windowList) {
-		let id = windowList[key].windowId
-		maximizeSingleWindowById(id)
+	
+	let count = 0;
+
+	while(count < 3){
+		for (let key in windowList) {
+			let id = windowList[key].windowId
+			maximizeSingleWindowById(id)
+		}
+		count++
 	}
+	
 	sendNotification('DONE MAXIMIZING WINDOWS')
 }
 
