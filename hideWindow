@@ -5,6 +5,18 @@ const fs = require('fs')
 const configFile = `${__dirname}/hideWindowConfig.json`;
 const hiddenDesktop = '2'
 
+const functionMapping = {
+	"switch_desktop": switchDesktop,
+	"hide_active": hideActiveWindow,
+	"unhide_all": unhideAllWindows,
+	"change_window_desktop": changeActiveWindowDesktop,
+	"show_hidden_count": listNumberOfHiddenWindows,
+	"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace,
+	"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop,
+	"maximize_all_windows_on_current_desktop": maximizeAllWindowsOnCurrentDesktop,
+	"perform_login_actions": performLoginActions,
+	"map": showMap
+}
 
 /**********************************************************************
  * UTILITY FUNCTIONS
@@ -46,7 +58,7 @@ function decideIndex(obj) {
 function getLayout() {
 	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
 	const desktopTable = { "0": {}, "1": {}, "2": {}, }
-	let data = execSync('wmctrl -l', { encoding: 'utf8' })
+	let data = execSync('wmctrl -l -G | sort -n -k4', { encoding: 'utf8' })
 	let lines = data.split("\n")
 
 	for (let key in lines) {
@@ -58,7 +70,7 @@ function getLayout() {
 		let index = decideIndex(desktopTable[desktopNumber])
 		desktopTable[desktopNumber][index] = {
 			"windowId": windowId,
-			"windowName": windowName
+			"windowName": windowName,
 		};
 	}
 
@@ -73,26 +85,26 @@ function turnOffRedshift() {
 	execSync("redshift -x")
 }
 
+function getPanelColorChangeCommand({ red, green, blue, hue  }){
+	return `xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue} && xfconf-query -c xfce4-panel -p /panels/panel-2/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue}`
+}
+
 function setPanelBGColor(desktopNumber) {
-	let desktopMap = {
-		'0': 'default',
-		'1': 'work',
-		'2': 'hidden'
+	const desktopMap = { '0': 'default', '1': 'work', '2': 'hidden' }
+
+	const commandTemplate = 'xfconf-query -c xfce4-panel  -p /plugins/plugin-2/grouping -s'
+	const commands = { groupWindows: `${commandTemplate} true`, separateWindows: `${commandTemplate} false` }
+
+
+	let BGMap = {
+
+		'default': `${getPanelColorChangeCommand({ red: 0.752941, green:0.109804, blue:0.156863, hue:1.000000 })}&& ${commands.separateWindows}`,
+
+		'work': `${getPanelColorChangeCommand({ red: 0.000000, green:0.000000, blue:0.000000, hue:0.700000 })} && ${commands.separateWindows}`,
+
+		'hidden': `${getPanelColorChangeCommand({ red: 0.366667, green:0.313149, blue:0.007333, hue:0.500000 })} && ${commands.groupWindows}`,
 	}
 	
-	let BGMap = {
-		'default': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.290000 -t double -s 0.007733 -t double -s 0.007733 -t double -s 0.600000',
-
-		'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.000000 -t double -s 0.700000',
-
-		'hidden': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.366667 -t double -s 0.313149 -t double -s 0.007333 -t double -s 0.500000',
-
-		
-	}
-
-	//                
-
-
 	execSync(BGMap[desktopMap[desktopNumber]]);
 }
 
@@ -225,6 +237,8 @@ function maximizeSingleWindowById(id) {
 }
 
 function maximizeAllWindowsOnCurrentDesktop() {
+	let activeWindowId = getActiveWindowId();
+	sendNotification(activeWindowId)
 	let activeDesktop = getActiveDesktop()
 	let desktopLayout = getLayout();
 	let windowList = desktopLayout[activeDesktop]
@@ -232,14 +246,15 @@ function maximizeAllWindowsOnCurrentDesktop() {
 	
 	let count = 0;
 
-	while(count < 3){
+	while(count < 2){
 		for (let key in windowList) {
 			let id = windowList[key].windowId
 			maximizeSingleWindowById(id)
 		}
 		count++
 	}
-	
+
+ execSync(`wmctrl -i -a ${activeWindowId}`)
 	sendNotification('DONE MAXIMIZING WINDOWS')
 }
 
@@ -287,6 +302,18 @@ function toggleHiddenWindowsWorkspace() {
 
 }
 
+function resolveWindowPosition(windowId, desktopId){
+	let destinationDesktopLayout = getLayout()[desktopId]
+	let index = Object.keys(destinationDesktopLayout)[Object.keys(destinationDesktopLayout).length - 1]
+	console.log({index})
+	let idOflastWindowInDestination = destinationDesktopLayout[index].windowId
+
+	let commandToResolveWindowPosition = `wmctrl -i -r ${windowId} -b remove,above && wmctrl -i -r ${idOflastWindowInDestination} -b add,above`
+	execSync(commandToResolveWindowPosition)
+	console.log({ idOflastWindowInDestination})
+	console.log({ destinationDesktopLayout })
+}
+
 function changeActiveWindowDesktop() {
 	let activeWindowId = getActiveWindowId();
 	let activeDesktop = getActiveDesktop()
@@ -304,6 +331,8 @@ function changeActiveWindowDesktop() {
 		let destination = desktopToMoveTo[activeDesktop]
 		let moveWindow = `wmctrl -i -r '${activeWindowId}' -t ${destination}`;
 		execSync(moveWindow)
+		//after moving the window to other desktop, set it as last item
+		// resolveWindowPosition(activeWindowId, destination)
 	}
 }
 
@@ -317,22 +346,20 @@ function listNumberOfHiddenWindows() {
 	console.log({ size })
 }
 
+function performLoginActions(){
+	execSync(`wmctrl -s 0`)
+	setPanelBGColor('0')
+}
+
+function showMap(){
+	console.log({ functionMapping })
+}
+
 function init() {
 	const arg = process.argv
 	const argument = arg.slice(2)[0]
 
 	if (Boolean(argument)) {
-		let functionMapping = {
-			"switch_desktop": switchDesktop,
-			"hide_active": hideActiveWindow,
-			"unhide_all": unhideAllWindows,
-			"change_window_desktop": changeActiveWindowDesktop,
-			"show_hidden_count": listNumberOfHiddenWindows,
-			"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace,
-			"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop,
-			"maximize_all_windows_on_current_desktop": maximizeAllWindowsOnCurrentDesktop
-		}
-
 		let functionToRun = functionMapping[argument]
 		try {
 			if (functionToRun) {
