@@ -3,7 +3,12 @@ const execSync = require('child_process').execSync
 const path = require('path')
 const fs = require('fs')
 const configFile = `${__dirname}/hideWindowConfig.json`;
+
+//desktop names
+const defaultDesktop = '0'
+const workDesktop = '1'
 const hiddenDesktop = '2'
+
 
 const functionMapping = {
 	"switch_desktop": switchDesktop,
@@ -77,13 +82,6 @@ function getLayout() {
 	return desktopTable
 }
 
-function turnOnRedshift() {
-	execSync("redshift -O 1500")
-}
-
-function turnOffRedshift() {
-	execSync("redshift -x")
-}
 
 function getPanelColorChangeCommand({ red, green, blue, hue  }){
 	return `xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue} && xfconf-query -c xfce4-panel -p /panels/panel-2/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue}`
@@ -95,14 +93,12 @@ function setPanelBGColor(desktopNumber) {
 	const commandTemplate = 'xfconf-query -c xfce4-panel  -p /plugins/plugin-2/grouping -s'
 	const commands = { groupWindows: `${commandTemplate} true`, separateWindows: `${commandTemplate} false` }
 
-
 	let BGMap = {
+		'default': `${getPanelColorChangeCommand({ red: 0.001978, green:0.121107, blue:0.296667, hue:1.000000 })} && ${commands.separateWindows}`,
 
-		'default': `${getPanelColorChangeCommand({ red: 0.752941, green:0.109804, blue:0.156863, hue:1.000000 })}&& ${commands.separateWindows}`,
+		'work': `${getPanelColorChangeCommand({ red:0.125490, green:0.129412, blue:0.141176, hue:1.000000 })} && ${commands.separateWindows}`,
 
-		'work': `${getPanelColorChangeCommand({ red: 0.000000, green:0.000000, blue:0.000000, hue:0.700000 })} && ${commands.separateWindows}`,
-
-		'hidden': `${getPanelColorChangeCommand({ red: 0.366667, green:0.313149, blue:0.007333, hue:0.500000 })} && ${commands.groupWindows}`,
+		'hidden': `${getPanelColorChangeCommand({ red: 0.286667, green:0.002867, blue:0.002867, hue:1.000000 })} && ${commands.groupWindows}`,
 	}
 	
 	execSync(BGMap[desktopMap[desktopNumber]]);
@@ -123,6 +119,9 @@ function updateConfigField(fieldName, data) {
 	updateConfigData(config)
 }
 
+function printMapping(){
+	console.log('available keys', functionMapping)
+}
 
 
 /**********************************************************************
@@ -287,7 +286,6 @@ function toggleHiddenWindowsWorkspace() {
 		let lastDesktop = config['lastDesktop']
 
 		setPanelBGColor(lastDesktop)
-		turnOffRedshift()
 		
 		//swtich to last desktop
 		let command = `wmctrl -s ${lastDesktop}`
@@ -295,7 +293,6 @@ function toggleHiddenWindowsWorkspace() {
 	} else {
 		//go to hidden desktop
 		updateCurrentAsLastDesktop()
-		turnOnRedshift();
 		setPanelBGColor('2')
 		execSync('wmctrl -s 2')
 	}
@@ -347,8 +344,16 @@ function listNumberOfHiddenWindows() {
 }
 
 function performLoginActions(){
-	execSync(`wmctrl -s 0`)
-	setPanelBGColor('0')
+	let commandRunCount = 0
+
+	sendNotification('PERFORMING LOGIN ACTIONS: start....')
+	while(commandRunCount < 4){
+		execSync(`wmctrl -s ${defaultDesktop}`)
+		setPanelBGColor(defaultDesktop)
+		commandRunCount++;
+	}
+	sendNotification('PERFORMING LOGIN ACTIONS: END')
+
 }
 
 function showMap(){
@@ -356,25 +361,26 @@ function showMap(){
 }
 
 function init() {
+	console.log('init: start')
 	const arg = process.argv
 	const argument = arg.slice(2)[0]
 
+	//if argument is truthy
 	if (Boolean(argument)) {
 		let functionToRun = functionMapping[argument]
 		try {
 			if (functionToRun) {
 				functionToRun()
 			} else {
-				let message = `${argument} is an invalid argument for this script`
-				console.log(message)
-				updateConfigField('error', message)
-				sendNotification(message)
+				printMapping();				
 			}
 		} catch (error) {
 			updateConfigField('error', error.toString());
 			console.log(error)
 			sendNotification('there was an error')
 		}
+	} else {
+		printMapping()
 	}
 }
 

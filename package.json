@@ -1,0 +1,11 @@
+{
+  "name": "xfce-window-hide",
+  "version": "1.0.0",
+  "description": "a script that provides window hiding capabilites to xfce4 through an abstraction layer and wmctrl",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "tobecci",
+  "license": "ISC"
+}
