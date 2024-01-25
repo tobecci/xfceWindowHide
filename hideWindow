@@ -352,6 +352,7 @@ function performLoginActions(){
 		setPanelBGColor(defaultDesktop)
 		commandRunCount++;
 	}
+	execSync('firefox --profile /home/tobecci/Documents/BrowserProfiles/Firefox/profileMenu --new-window about:profiles')
 	sendNotification('PERFORMING LOGIN ACTIONS: END')
 
 }
