@@ -4,6 +4,9 @@ const path = require('path')
 const fs = require('fs')
 const configFile = `${__dirname}/hideWindowConfig.json`;
 
+//unit in milliseconds
+const sleepTime = 200
+
 //desktop names
 const defaultDesktop = '0'
 const workDesktop = '1'
@@ -20,12 +23,46 @@ const functionMapping = {
 	"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop,
 	"maximize_all_windows_on_current_desktop": maximizeAllWindowsOnCurrentDesktop,
 	"perform_login_actions": performLoginActions,
+	'launch_app': launchApp,
+	'ensure_desktop_panel_color': ensureCorrectDesktopPanelColor,
 	"map": showMap
 }
 
 /**********************************************************************
  * UTILITY FUNCTIONS
  **********************************************************************/
+
+function getConfigData() {
+	let fileData = fs.readFileSync(configFile, { encoding: 'utf8' })
+	return JSON.parse(fileData);
+}
+
+function updateConfigData(data) {
+	fs.writeFileSync(configFile, JSON.stringify(data))
+}
+
+function logError(error) {
+	let config = getConfigData();
+	const timeStamp = `${new Date().toDateString()} - ${new Date().toLocaleTimeString()}`;
+	const summarizedError = {
+		message: error.message,
+		file: error.fileName,
+		line: error.lineNumber,
+		timestamp: timeStamp
+	}
+
+	if (Array.isArray(config.error)) {
+		if (config.error.length >= 5) {
+			config.error.shift();
+		}
+	}
+	else {
+		config.error = [];
+	}
+
+	config.error.push(summarizedError);
+	updateConfigData(config)
+}
 
 const utils = {
 	data: {
@@ -34,6 +71,14 @@ const utils = {
 	functions: {
 		killOpenNotifs() {
 			execSync('pkill -f notify-osd')
+		},
+		runCommand(command) {
+			try {
+				return execSync(command, { encoding: 'utf8' }).trim();
+			} catch (error) {
+				logError(error);
+				return false;
+			}
 		}
 	}
 }
@@ -60,57 +105,75 @@ function decideIndex(obj) {
 	}
 }
 
-function getLayout() {
+function getLayout(collapsed = false) {
 	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
 	const desktopTable = { "0": {}, "1": {}, "2": {}, }
+	const desktopTableArray = []
+
 	let data = execSync('wmctrl -l -G | sort -n -k4', { encoding: 'utf8' })
 	let lines = data.split("\n")
 
+	if (lines[lines.length - 1] === '') lines.pop();
+
 	for (let key in lines) {
-		let windowInfoArray = lines[key].split(' ');
-		let windowName = windowInfoArray[windowInfoArray.length - 1]
+		const currentLine = lines[key]
+		const hostname = execSync(`hostname`, { encoding: 'utf-8' }).trimEnd();
+		const regex = RegExp(`(?<=${hostname}\\s+).*`)
+		const windowNameSearchResult = currentLine.match(regex);
+		let windowName = false;
+		let windowClass = false;
+
+		let windowInfoArray = currentLine.split(' ');
+
+		windowName = windowNameSearchResult ? windowNameSearchResult[0] : false;
+
 		if (windowsToIgnore.includes(windowName) || !Boolean(windowName)) continue;
+
 		let windowId = windowInfoArray[0]
 		let desktopNumber = windowInfoArray[2]
-		let index = decideIndex(desktopTable[desktopNumber])
-		desktopTable[desktopNumber][index] = {
-			"windowId": windowId,
-			"windowName": windowName,
-		};
-	}
 
-	return desktopTable
+		const windowClassCommandOutput = execSync(`xprop -id ${windowId} WM_CLASS`, { encoding: 'utf-8' }).trim()
+		const windowClassSearchResult = windowClassCommandOutput.match(/(?<=WM_CLASS\(STRING\)\s+=\s+).*/i)
+		windowClass = windowClassSearchResult ? windowClassSearchResult[0] : false;
+
+		const windowData = { "windowId": windowId, "windowName": windowName, "windowClass": windowClass };
+
+		if (!collapsed) {
+			let index = decideIndex(desktopTable[desktopNumber])
+			desktopTable[desktopNumber][index] = windowData
+		} else {
+			desktopTableArray.push(windowData);
+		}
+	}
+	if (!collapsed) {
+		return desktopTable;
+	} else {
+		return desktopTableArray;
+	}
 }
 
 
-function getPanelColorChangeCommand({ red, green, blue, hue  }){
+function getPanelColorChangeCommand({ red, green, blue, hue }) {
 	return `xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue} && xfconf-query -c xfce4-panel -p /panels/panel-2/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue}`
 }
 
+
+
 function setPanelBGColor(desktopNumber) {
-	const desktopMap = { '0': 'default', '1': 'work', '2': 'hidden' }
+	const desktopMap = { [defaultDesktop]: 'default', [workDesktop]: 'work', [hiddenDesktop]: 'hidden' }
 
 	const commandTemplate = 'xfconf-query -c xfce4-panel  -p /plugins/plugin-2/grouping -s'
 	const commands = { groupWindows: `${commandTemplate} true`, separateWindows: `${commandTemplate} false` };
 
 	let BGMap = {
-		'default': `${getPanelColorChangeCommand({ red: 0.207843, green:0.517647, blue:0.894118, hue:1.000000 })} && ${commands.separateWindows}`,
+		'default': `${getPanelColorChangeCommand({ red: 0.207843, green: 0.517647, blue: 0.894118, hue: 1.000000 })} && ${commands.separateWindows}`,
 
-		'work': `${getPanelColorChangeCommand({ red:0.125490, green:0.129412, blue:0.141176, hue:1.000000 })} && ${commands.separateWindows}`,
+		'work': `${getPanelColorChangeCommand({ red: 0.125490, green: 0.129412, blue: 0.141176, hue: 1.000000 })} && ${commands.separateWindows}`,
 
-		'hidden': `${getPanelColorChangeCommand({ red: 0.752941, green: 0.109804, blue:0.156863, hue:1.000000 })} && ${commands.groupWindows}`,
+		'hidden': `${getPanelColorChangeCommand({ red: 0.752941, green: 0.109804, blue: 0.156863, hue: 1.000000 })} && ${commands.groupWindows}`,
 	}
-	
+
 	execSync(BGMap[desktopMap[desktopNumber]]);
-}
-
-function getConfigData() {
-	let fileData = fs.readFileSync(configFile, { encoding: 'utf8' })
-	return JSON.parse(fileData);
-}
-
-function updateConfigData(data) {
-	fs.writeFileSync(configFile, JSON.stringify(data))
 }
 
 function updateConfigField(fieldName, data) {
@@ -119,7 +182,7 @@ function updateConfigField(fieldName, data) {
 	updateConfigData(config)
 }
 
-function printMapping(){
+function printMapping() {
 	console.log('available keys', functionMapping)
 }
 
@@ -143,7 +206,6 @@ function listAllDesktops() {
 	let lines = result.split('\n')
 	lines.pop();
 	let desktops = lines.map((line) => {
-		console.log(line);
 		return line.slice(0, 1)
 	})
 	return desktops
@@ -237,24 +299,19 @@ function maximizeSingleWindowById(id) {
 
 function maximizeAllWindowsOnCurrentDesktop() {
 	let activeWindowId = getActiveWindowId();
-	sendNotification(activeWindowId)
 	let activeDesktop = getActiveDesktop()
 	let desktopLayout = getLayout();
 	let windowList = desktopLayout[activeDesktop]
-	sendNotification('MAXIMIZING WINDOWS')
-	
 	let count = 0;
 
-	while(count < 2){
+	while (count < 2) {
 		for (let key in windowList) {
 			let id = windowList[key].windowId
 			maximizeSingleWindowById(id)
 		}
 		count++
 	}
-
- execSync(`wmctrl -i -a ${activeWindowId}`)
-	sendNotification('DONE MAXIMIZING WINDOWS')
+	execSync(`wmctrl -i -a ${activeWindowId}`)
 }
 
 function switchDesktop() {
@@ -286,7 +343,7 @@ function toggleHiddenWindowsWorkspace() {
 		let lastDesktop = config['lastDesktop']
 
 		setPanelBGColor(lastDesktop)
-		
+
 		//swtich to last desktop
 		let command = `wmctrl -s ${lastDesktop}`
 		execSync(command)
@@ -299,16 +356,13 @@ function toggleHiddenWindowsWorkspace() {
 
 }
 
-function resolveWindowPosition(windowId, desktopId){
+function resolveWindowPosition(windowId, desktopId) {
 	let destinationDesktopLayout = getLayout()[desktopId]
 	let index = Object.keys(destinationDesktopLayout)[Object.keys(destinationDesktopLayout).length - 1]
-	console.log({index})
 	let idOflastWindowInDestination = destinationDesktopLayout[index].windowId
 
 	let commandToResolveWindowPosition = `wmctrl -i -r ${windowId} -b remove,above && wmctrl -i -r ${idOflastWindowInDestination} -b add,above`
 	execSync(commandToResolveWindowPosition)
-	console.log({ idOflastWindowInDestination})
-	console.log({ destinationDesktopLayout })
 }
 
 function changeActiveWindowDesktop() {
@@ -324,7 +378,7 @@ function changeActiveWindowDesktop() {
 			'0': '1',
 			'1': '0'
 		}
-	
+
 		let destination = desktopToMoveTo[activeDesktop]
 		let moveWindow = `wmctrl -i -r '${activeWindowId}' -t ${destination}`;
 		execSync(moveWindow)
@@ -340,14 +394,13 @@ function listNumberOfHiddenWindows() {
 	let objectKeys = Object.keys(hiddenWindowArray)
 	let size = objectKeys.length
 	sendNotification(`hidden: ${size} windows`, 2000)
-	console.log({ size })
 }
 
-function performLoginActions(){
+function performLoginActions() {
 	let commandRunCount = 0
 
 	sendNotification('PERFORMING LOGIN ACTIONS: start....')
-	while(commandRunCount < 4){
+	while (commandRunCount < 4) {
 		execSync(`wmctrl -s ${defaultDesktop}`)
 		setPanelBGColor(defaultDesktop)
 		commandRunCount++;
@@ -357,12 +410,40 @@ function performLoginActions(){
 
 }
 
-function showMap(){
+function showMap() {
 	console.log({ functionMapping })
 }
 
+/**
+ * returns the windowId and resident desktopNumber, if it exists
+ */
+function getWindowDetailsFromName() {
+
+}
+
+function launchApp() {
+	console.log('launching apps');
+	const desktopLayout = getLayout();
+	// console.log(desktopLayout)
+	console.log(utils.functions.runCommand('hostname'))
+}
+
+function toggleSocialGptWindows() {
+
+}
+
+function ensureCorrectDesktopPanelColor() {
+	let previousDesktop = false;
+	let sleepTimeInDecimal = sleepTime / 1000
+
+	//infinite loop to monitor current desktop
+	while (true) {
+		console.log('loop iterating', { previousDesktop })
+		execSync(`sleep ${sleepTimeInDecimal}`);
+	}
+}
+
 function init() {
-	console.log('init: start')
 	const arg = process.argv
 	const argument = arg.slice(2)[0]
 
@@ -373,11 +454,10 @@ function init() {
 			if (functionToRun) {
 				functionToRun()
 			} else {
-				printMapping();				
+				printMapping();
 			}
 		} catch (error) {
-			updateConfigField('error', error.toString());
-			console.log(error)
+			logError(error)
 			sendNotification('there was an error')
 		}
 	} else {
@@ -398,4 +478,4 @@ init();
 // wmctrl -i -r <window_id> -b add,maximized_vert,maximized_horz
 
 // work green color
-	// 'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
+// 'work': 'xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s 0.011667 -t double -s 0.166667 -t double -s 0.022175 -t double -s 1.000000',
