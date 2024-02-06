@@ -1,1 +1,26 @@
-{"program":"hideWindow","lastDesktop":"0","error":"Error: Command failed: wmctrl -i -a undefined\nCannot convert argument to number.\n"}
+{
+  "program": "hideWindow",
+  "lastDesktop": "1",
+  "error": [
+    {
+      "message": "Command failed: wmctrl -i -r 'undefined' -t 0\nCannot convert argument to number.\n",
+      "timestamp": "Tue Feb 06 2024 - 4:40:30 AM"
+    },
+    {
+      "message": "Command failed: wmctrl -i -r 'undefined' -t 0\nCannot convert argument to number.\n",
+      "timestamp": "Tue Feb 06 2024 - 4:41:28 AM"
+    },
+    {
+      "message": "Command failed: wmctrl -i -r 'undefined' -t 0\nCannot convert argument to number.\n",
+      "timestamp": "Tue Feb 06 2024 - 4:41:39 AM"
+    },
+    {
+      "message": "Command failed: wmctrl -i -r 'undefined' -t 0\nCannot convert argument to number.\n",
+      "timestamp": "Tue Feb 06 2024 - 4:42:07 AM"
+    },
+    {
+      "message": "Command failed: wmctrl -i -r 'undefined' -t 0\nCannot convert argument to number.\n",
+      "timestamp": "Tue Feb 06 2024 - 4:43:36 AM"
+    }
+  ]
+}

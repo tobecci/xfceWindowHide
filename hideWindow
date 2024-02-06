@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 const execSync = require('child_process').execSync
-const path = require('path')
 const fs = require('fs')
 const configFile = `${__dirname}/hideWindowConfig.json`;
-
-//unit in milliseconds
-const sleepTime = 200
 
 //desktop names
 const defaultDesktop = '0'
 const workDesktop = '1'
 const hiddenDesktop = '2'
-
 
 const functionMapping = {
 	"switch_desktop": switchDesktop,
@@ -21,8 +16,7 @@ const functionMapping = {
 	"show_hidden_count": listNumberOfHiddenWindows,
 	"switch_to_hidden_workspace": toggleHiddenWindowsWorkspace,
 	"hide_all_windows_on_current_desktop": hideAllWindowsOnCurrentDesktop,
-	"maximize_all_windows_on_current_desktop": maximizeAllWindowsOnCurrentDesktop,
-	"perform_login_actions": performLoginActions,
+	"maximize_all_windows": maximizeAllWindows,
 	'launch_app': launchApp,
 	'ensure_desktop_panel_color': ensureCorrectDesktopPanelColor,
 	"map": showMap
@@ -32,13 +26,14 @@ const functionMapping = {
  * UTILITY FUNCTIONS
  **********************************************************************/
 
+
 function getConfigData() {
 	let fileData = fs.readFileSync(configFile, { encoding: 'utf8' })
 	return JSON.parse(fileData);
 }
 
 function updateConfigData(data) {
-	fs.writeFileSync(configFile, JSON.stringify(data))
+	fs.writeFileSync(configFile, JSON.stringify(data, null, 2))
 }
 
 function logError(error) {
@@ -70,12 +65,20 @@ const utils = {
 	},
 	functions: {
 		killOpenNotifs() {
-			execSync('pkill -f notify-osd')
+			utils.functions.runCommand('pkill -f notify-osd')
 		},
-		runCommand(command) {
+		runCommand(command, disableOutput = false) {
 			try {
-				return execSync(command, { encoding: 'utf8' }).trim();
+				options = { encoding: 'utf-8' }
+				if (disableOutput) {
+					// console.log('disabling output')
+					delete options.encoding
+				}
+				const commandOutputData = execSync(command, options).trim();
+				// console.log('command and output::::::::::::::', command, commandOutputData)
+				return commandOutputData;
 			} catch (error) {
+				// console.log('error during command execution', error)
 				logError(error);
 				return false;
 			}
@@ -86,12 +89,15 @@ const utils = {
 function sendNotification(message, timeInMilliSeconds = false) {
 	// utils.functions.killOpenNotifs()
 	if (timeInMilliSeconds) {
-		execSync(`notify-send '${message}' -t ${timeInMilliSeconds}`)
-		return;
+		utils.functions.runCommand(`notify-send '${message}' -t ${timeInMilliSeconds}`)
 	} else {
-		execSync(`notify-send '${message}' -t ${utils.data.timeInMilliSeconds}`)
+		utils.functions.runCommand(`notify-send '${message}' -t ${utils.data.timeInMilliSeconds}`)
 		return;
 	}
+}
+
+function blinkScreen(timeInMilliSeconds=200){
+	utils.functions.runCommand(`redshift -O 1000; sleep ${timeInMilliSeconds/1000}; redshift -x;`)
 }
 
 function decideIndex(obj) {
@@ -107,17 +113,17 @@ function decideIndex(obj) {
 
 function getLayout(collapsed = false) {
 	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
-	const desktopTable = { "0": {}, "1": {}, "2": {}, }
+	const desktopTable = { [defaultDesktop]: {}, [workDesktop]: {}, [hiddenDesktop]: {}, }
 	const desktopTableArray = []
 
-	let data = execSync('wmctrl -l -G | sort -n -k4', { encoding: 'utf8' })
+	let data = utils.functions.runCommand('wmctrl -l -G | sort -n -k4')
 	let lines = data.split("\n")
 
 	if (lines[lines.length - 1] === '') lines.pop();
 
 	for (let key in lines) {
 		const currentLine = lines[key]
-		const hostname = execSync(`hostname`, { encoding: 'utf-8' }).trimEnd();
+		const hostname = utils.functions.runCommand(`hostname`);
 		const regex = RegExp(`(?<=${hostname}\\s+).*`)
 		const windowNameSearchResult = currentLine.match(regex);
 		let windowName = false;
@@ -127,12 +133,15 @@ function getLayout(collapsed = false) {
 
 		windowName = windowNameSearchResult ? windowNameSearchResult[0] : false;
 
-		if (windowsToIgnore.includes(windowName) || !Boolean(windowName)) continue;
+		if (windowsToIgnore.includes(windowName) || !Boolean(windowName)) {
+			// console.log('line to be ignored::::::', currentLine);
+			continue
+		}
 
 		let windowId = windowInfoArray[0]
 		let desktopNumber = windowInfoArray[2]
 
-		const windowClassCommandOutput = execSync(`xprop -id ${windowId} WM_CLASS`, { encoding: 'utf-8' }).trim()
+		const windowClassCommandOutput = utils.functions.runCommand(`xprop -id ${windowId} WM_CLASS`)
 		const windowClassSearchResult = windowClassCommandOutput.match(/(?<=WM_CLASS\(STRING\)\s+=\s+).*/i)
 		windowClass = windowClassSearchResult ? windowClassSearchResult[0] : false;
 
@@ -173,7 +182,7 @@ function setPanelBGColor(desktopNumber) {
 		'hidden': `${getPanelColorChangeCommand({ red: 0.752941, green: 0.109804, blue: 0.156863, hue: 1.000000 })} && ${commands.groupWindows}`,
 	}
 
-	execSync(BGMap[desktopMap[desktopNumber]]);
+	utils.functions.runCommand(BGMap[desktopMap[desktopNumber]]);
 }
 
 function updateConfigField(fieldName, data) {
@@ -194,15 +203,20 @@ function printMapping() {
 
 
 function getActiveWindowId() {
-	let command = "xdotool getactivewindow"
-	let result = execSync(command, { encoding: 'utf8' })
-	result = result.slice(0, result.length - 1)
-	return result;
+	try {
+		let command = "xdotool getwindowfocus"
+		let result = utils.functions.runCommand(command)
+		let windowId = parseInt(result)
+		windowId = `0x0${windowId.toString(16)}`
+		return windowId
+	} catch (error) {
+		sendNotification('error getting active windowId')
+	}
 }
 
 function listAllDesktops() {
 	let command = "wmctrl -d"
-	let result = execSync(command, { encoding: 'utf8' })
+	let result = utils.functions.runCommand(command)
 	let lines = result.split('\n')
 	lines.pop();
 	let desktops = lines.map((line) => {
@@ -213,7 +227,7 @@ function listAllDesktops() {
 
 function getActiveDesktop() {
 	let command = "wmctrl -d | grep '*'"
-	let result = execSync(command, { encoding: 'utf8' })
+	let result = utils.functions.runCommand(command)
 	result = result.slice(0, 1)
 	return result;
 }
@@ -234,22 +248,26 @@ function hideActiveWindow() {
 	let activeDesktop = getActiveDesktop();
 	let activeWindowId = getActiveWindowId()
 
-	//if on hidden desktop, unhide instead
+
+	// if on hidden desktop, unhide instead
 	if (activeDesktop === hiddenDesktop) {
-		command = `wmctrl -i -r '${activeWindowId}' -t 1`
-		execSync(command);
+		command = `wmctrl -i -r '${activeWindowId}' -t '${workDesktop}'`
+		utils.functions.runCommand(command);
+		blinkScreen()
 		sendNotification('window restored successfully')
 	} else {
 		//else, hide
-		command = `wmctrl -i -r '${activeWindowId}' -t 2`
-		execSync(command);
+		sendNotification('on default desktop')
+		command = `wmctrl -i -r '${activeWindowId}' -t '${hiddenDesktop}'`
+		utils.functions.runCommand(command);
+		blinkScreen()
 		sendNotification('window hidden successfully');
 	}
 }
 
-function unhideWindow(windowId) {
+function unhideWindowById(windowId) {
 	command = `wmctrl -i -r '${windowId}' -t 0`
-	execSync(command);
+	utils.functions.runCommand(command);
 }
 
 
@@ -258,14 +276,14 @@ function unhideAllWindows() {
 	let hiddenWindowArray = layout['2']
 	sendNotification('RESTORING WINDOWS');
 	for (let key in hiddenWindowArray) {
-		unhideWindow(hiddenWindowArray[key].windowId)
+		unhideWindowById(hiddenWindowArray[key].windowId)
 	}
 	sendNotification('WINDOWS RESTORED SUCCESSFULLY')
 }
 
 function hideWindowById(windowId) {
 	command = `wmctrl -i -r '${windowId}' -t ${hiddenDesktop}`
-	execSync(command);
+	utils.functions.runCommand(command);
 }
 
 function hideAllWindowsOnCurrentDesktop() {
@@ -290,18 +308,16 @@ function hideAllWindowsOnCurrentDesktop() {
 
 function maximizeSingleWindowById(id) {
 	let commandToFocusWindow = `wmctrl -i -a ${id}`
-	execSync(commandToFocusWindow)
+	utils.functions.runCommand(commandToFocusWindow)
 	let commandToUnMaximize = `wmctrl -i -r ${id} -b remove,maximized_vert,maximized_horz`
-	execSync(commandToUnMaximize)
+	utils.functions.runCommand(commandToUnMaximize)
 	let commandToMaximize = `wmctrl -i -r ${id} -b add,maximized_vert,maximized_horz`
-	execSync(commandToMaximize)
+	utils.functions.runCommand(commandToMaximize)
 }
 
-function maximizeAllWindowsOnCurrentDesktop() {
+function maximizeAllWindows() {
 	let activeWindowId = getActiveWindowId();
-	let activeDesktop = getActiveDesktop()
-	let desktopLayout = getLayout();
-	let windowList = desktopLayout[activeDesktop]
+	let windowList = getLayout(true);
 	let count = 0;
 
 	while (count < 2) {
@@ -311,7 +327,7 @@ function maximizeAllWindowsOnCurrentDesktop() {
 		}
 		count++
 	}
-	execSync(`wmctrl -i -a ${activeWindowId}`)
+	utils.functions.runCommand(`wmctrl -i -a ${activeWindowId}`)
 }
 
 function switchDesktop() {
@@ -328,10 +344,8 @@ function switchDesktop() {
 			'1': '0'
 		}
 		updateCurrentAsLastDesktop()
-		let command = `wmctrl -s ${desktopToMoveTo[activeDesktop]}`
-		setPanelBGColor(desktopToMoveTo[activeDesktop])
-		execSync(command)
-		sendNotification(`Desktop: ${parseInt(desktopToMoveTo[activeDesktop]) + 1}`)
+		// let command = 
+		utils.functions.runCommand(`wmctrl -s ${desktopToMoveTo[activeDesktop]}`)
 		return;
 	}
 }
@@ -342,16 +356,16 @@ function toggleHiddenWindowsWorkspace() {
 		let config = getConfigData()
 		let lastDesktop = config['lastDesktop']
 
-		setPanelBGColor(lastDesktop)
+		// setPanelBGColor(lastDesktop)
 
 		//swtich to last desktop
 		let command = `wmctrl -s ${lastDesktop}`
-		execSync(command)
+		utils.functions.runCommand(command)
 	} else {
 		//go to hidden desktop
 		updateCurrentAsLastDesktop()
-		setPanelBGColor('2')
-		execSync('wmctrl -s 2')
+		// setPanelBGColor('2')
+		utils.functions.runCommand('wmctrl -s 2')
 	}
 
 }
@@ -362,26 +376,25 @@ function resolveWindowPosition(windowId, desktopId) {
 	let idOflastWindowInDestination = destinationDesktopLayout[index].windowId
 
 	let commandToResolveWindowPosition = `wmctrl -i -r ${windowId} -b remove,above && wmctrl -i -r ${idOflastWindowInDestination} -b add,above`
-	execSync(commandToResolveWindowPosition)
+	utils.functions.runCommand(commandToResolveWindowPosition)
 }
 
 function changeActiveWindowDesktop() {
 	let activeWindowId = getActiveWindowId();
 	let activeDesktop = getActiveDesktop()
-
 	if (activeDesktop === hiddenDesktop) {
 		//do nothing
 		sendNotification('that action is prohibited on the hidden workspace')
 		return;
 	} else {
 		let desktopToMoveTo = {
-			'0': '1',
-			'1': '0'
+			[defaultDesktop]: workDesktop,
+			[workDesktop]: defaultDesktop
 		}
 
 		let destination = desktopToMoveTo[activeDesktop]
 		let moveWindow = `wmctrl -i -r '${activeWindowId}' -t ${destination}`;
-		execSync(moveWindow)
+		utils.functions.runCommand(moveWindow)
 		//after moving the window to other desktop, set it as last item
 		// resolveWindowPosition(activeWindowId, destination)
 	}
@@ -389,26 +402,25 @@ function changeActiveWindowDesktop() {
 
 function listNumberOfHiddenWindows() {
 	let layout = getLayout();
-	let hiddenWindowArray = layout['2']
+	let hiddenWindowArray = layout[hiddenDesktop]
 
 	let objectKeys = Object.keys(hiddenWindowArray)
 	let size = objectKeys.length
-	sendNotification(`hidden: ${size} windows`, 2000)
+	sendNotification(`hidden: ${size} windows`, 500)
 }
 
-function performLoginActions() {
-	let commandRunCount = 0
+// function performLoginActions() {
+// 	let commandRunCount = 0
 
-	sendNotification('PERFORMING LOGIN ACTIONS: start....')
-	while (commandRunCount < 4) {
-		execSync(`wmctrl -s ${defaultDesktop}`)
-		setPanelBGColor(defaultDesktop)
-		commandRunCount++;
-	}
-	execSync('firefox --profile /home/tobecci/Documents/BrowserProfiles/Firefox/profileMenu --new-window about:profiles')
-	sendNotification('PERFORMING LOGIN ACTIONS: END')
-
-}
+// 	sendNotification('PERFORMING LOGIN ACTIONS: start....')
+// 	while (commandRunCount < 4) {
+// 		utils.functions.runCommand(`wmctrl -s ${defaultDesktop}`)
+// 		setPanelBGColor(defaultDesktop)
+// 		commandRunCount++;
+// 	}
+// 	utils.functions.runCommand('firefox --profile /home/tobecci/Documents/BrowserProfiles/Firefox/profileMenu --new-window about:profiles')
+// 	sendNotification('PERFORMING LOGIN ACTIONS: END')
+// }
 
 function showMap() {
 	console.log({ functionMapping })
@@ -422,10 +434,10 @@ function getWindowDetailsFromName() {
 }
 
 function launchApp() {
-	console.log('launching apps');
+	// console.log('launching apps');
 	const desktopLayout = getLayout();
 	// console.log(desktopLayout)
-	console.log(utils.functions.runCommand('hostname'))
+	// console.log(utils.functions.runCommand('hostname'))
 }
 
 function toggleSocialGptWindows() {
@@ -434,12 +446,24 @@ function toggleSocialGptWindows() {
 
 function ensureCorrectDesktopPanelColor() {
 	let previousDesktop = false;
-	let sleepTimeInDecimal = sleepTime / 1000
+	let currentDesktop;
 
 	//infinite loop to monitor current desktop
 	while (true) {
-		console.log('loop iterating', { previousDesktop })
-		execSync(`sleep ${sleepTimeInDecimal}`);
+		currentDesktop = utils.functions.runCommand('xdotool get_desktop')
+		//if first iteration, set color according to currenrDesktop variable
+		if (previousDesktop === false) {
+			//set background
+			setPanelBGColor(currentDesktop)
+			previousDesktop = currentDesktop;
+			// console.log({ previousDesktop, currentDesktop })
+		}
+
+		if (currentDesktop !== previousDesktop) {
+			setPanelBGColor(currentDesktop)
+			previousDesktop = currentDesktop
+		}
+		// utils.functions.runCommand(`sleep 0.4 && exit`);
 	}
 }
 
@@ -466,6 +490,7 @@ function init() {
 }
 
 init();
+getLayout();
 
 /**
  * three finger swipe up hide window
