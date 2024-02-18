@@ -129,18 +129,21 @@ async function sendNotification(message, timeInMilliSeconds = false) {
 		return;
 	}
 }
-
 /**
- * 
- * @param numberOfTimes number
- * @param soundType [ success, error, alert ]
+ * @typedef { Object } soundType
+ * @property success
+ * @property error
+ * @property alert
  */
-async function playNotificationSound({ numberOfTimes = 1, soundType = 'alert' }) {
+
+async function playNotificationSound({ numberOfTimes = 1, /** @type { soundType } ***/ soundType = 'alert' }) {
 	const soundMap = {
 		'success': `${commandFullPaths.paplay}  /usr/share/sounds/freedesktop/stereo/complete.oga`,
-		'error': `${commandFullPaths.paplay}  /usr/share/sounds/freedesktop/stereo/dialog-error.oga`,
+		'error': `${commandFullPaths.paplay}  /usr/share/sounds/freedesktop/stereo/audio-test-signal.oga`,
 		'alert': `${commandFullPaths.paplay} /usr/share/sounds/freedesktop/stereo/message.oga`
 	}
+
+
 
 	let command = "/usr/bin/pactl set-sink-mute @DEFAULT_SINK@ 0; /usr/bin/pactl set-sink-volume @DEFAULT_SINK@ 100%;";
 	for (let i = 0; i < numberOfTimes; i++) {
@@ -261,9 +264,9 @@ function getActiveDesktop() {
  * this would typically happen before a switch
  * @param desktopNumber
  */
-function updateCurrentAsLastDesktop() {
+function updateCurrentAsLastDesktop(activeDesktop) {
 	let config = getConfigData()
-	config['lastDesktop'] = getActiveDesktop()
+	config['lastDesktop'] = activeDesktop
 	updateConfigData(config)
 }
 
@@ -274,10 +277,10 @@ function hideActiveWindow(options = []) {
 		const config = getConfigData();
 
 		utils.functions.runCommand(`${commandFullPaths.wmctrl} -i -r '${getActiveWindowId()}' -t '${config['lastDesktop']}'`, true);
-		playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
+		// playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
 	} else {
 		//else, hide
-		playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
+		// playNotificationSound({ numberOfTimes: 1, soundType: 'error' });
 		utils.functions.runCommand(`${commandFullPaths.wmctrl} -i -r '${getActiveWindowId()}' -t '${hiddenDesktop}'`, true);
 	}
 }
@@ -297,7 +300,7 @@ function unhideAllWindows(options = []) {
 	for (let key in hiddenWindowArray) {
 		unhideWindowById(hiddenWindowArray[key].windowId, desktopToRestoreTo)
 	}
-	playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
+	// playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
 }
 
 function hideWindowById(windowId) {
@@ -310,7 +313,7 @@ function hideAllWindowsOnCurrentDesktop(options = []) {
 
 	if (activeDesktop === hiddenDesktop) {
 		//do nothing
-		playNotificationSound({ numberOfTimes: 1, soundType: 'error' });
+		// playNotificationSound({ numberOfTimes: 1, soundType: 'error' });
 		return;
 	} else {
 		let desktopLayout = getLayout();
@@ -319,7 +322,7 @@ function hideAllWindowsOnCurrentDesktop(options = []) {
 			let id = windowList[key].windowId
 			hideWindowById(id)
 		}
-		playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
+		// playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
 	}
 
 }
@@ -352,15 +355,15 @@ function maximizeAllWindows(options = []) {
 
 	//give focus to initially active window
 	utils.functions.runCommand(`${commandFullPaths.wmctrl} -i -a ${activeWindowId}`, true)
-	playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
+	// playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
 }
 
 function switchDesktop(options = []) {
 	try {
 		let activeDesktop = getActiveDesktop();
 		if (activeDesktop === hiddenDesktop) {
-		//do nothing
-			playNotificationSound({ numberOfTimes: 1, soundType: 'error' });
+			//do nothing
+			// playNotificationSound({ numberOfTimes: 1, soundType: 'error' });
 			return
 		} else {
 			// switch the desktop
@@ -368,7 +371,8 @@ function switchDesktop(options = []) {
 				[defaultDesktop]: [workDesktop],
 				[workDesktop]: [defaultDesktop]
 			}
-			playNotificationSound({ numberOfTimes: 1, soundType: 'alert' })
+
+			// playNotificationSound({ numberOfTimes: 1, soundType: 'alert' })
 			utils.functions.runCommand(`${commandFullPaths.wmctrl} -s ${desktopToMoveTo[activeDesktop]}`, true)
 			return
 		}
@@ -379,15 +383,17 @@ function switchDesktop(options = []) {
 
 function toggleHiddenWindowsWorkspace(options = []) {
 	//if on the hidden desktop, go to the last workspace
-	if (getActiveDesktop() === hiddenDesktop) {
-		const config = getConfigData()
+	const currentDesktop = getActiveDesktop();
 
+	if (currentDesktop === hiddenDesktop) {
+		const config = getConfigData()
 		//swtich to last desktop
 		utils.functions.runCommand(`${commandFullPaths.wmctrl} -s ${config['lastDesktop']}`, true)
 		return
 	} else {
 		//go to hidden desktop
-		updateCurrentAsLastDesktop()
+		updateCurrentAsLastDesktop(currentDesktop)
+		// playNotificationSound({ numberOfTimes: 1, soundType: 'error' })
 		utils.functions.runCommand(`${commandFullPaths.wmctrl} -s ${hiddenDesktop}`, true)
 		return
 	}
@@ -462,8 +468,8 @@ async function ensureCorrectDesktopPanelColor(options = []) {
 	let currentDesktop;
 	const panelCommands = getPanelChangeCommands()
 
-	freeMemory();
-	freeMemory = undefined
+	// freeMemory();
+	// freeMemory = undefined
 
 	//infinite loop to monitor current desktop
 	while (true) {
@@ -500,8 +506,12 @@ async function localizeWindows() {
 	}
 }
 
+async function test() {
+	console.log('hello')
+}
+
 async function startOperationalLoop(options = []) {
-	ensureCorrectDesktopPanelColor();
+	ensureCorrectDesktopPanelColor()
 	localizeWindows();
 }
 
@@ -512,12 +522,16 @@ function renameActiveWindow(options = []) {
 
 	// --entry-text "initial window name"
 	const result = utils.functions.runCommand(`zenity --entry --title "New Window Title" --text "Enter name:" 2>/dev/null | cat`)
+
+	//if no string is provided, exit gracefully
+	if (result.length === 0) { return }
+
 	const commandToRenameWindow = `xprop -id ${activeWindowId} -f _NET_WM_NAME 8u -set _NET_WM_NAME '${result}'`
 	// console.log(result)
 	utils.functions.runCommand(commandToRenameWindow, true)
 
-// execFileSync(`notify-send ${result}`, { shell: '/bin/sh'})
-// execFileSync('notify-send hello', { shell: '/bin/sh'})
+	// execFileSync(`notify-send ${result}`, { shell: '/bin/sh'})
+	// execFileSync('notify-send hello', { shell: '/bin/sh'})
 }
 
 function init() {
