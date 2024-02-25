@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "a script that provides window hiding capabilites to xfce4 through an abstraction layer and wmctrl",
   "main": "index.js",
+"type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "tobecci",
-  "license": "ISC"
+"license": "ISC",
+"devDependencies": {
+	"@types/node": "^20.11.20"
+}
 }

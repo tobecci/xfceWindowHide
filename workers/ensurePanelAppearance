@@ -1,0 +1,65 @@
+#!/home/tobecci/.nvm/versions/node/v18.16.1/bin/node
+
+let { execFileSync } = require('child_process');
+const { utils, defaultDesktop, workDesktop, hiddenDesktop } = require('../hideWindow')
+
+
+console.log({ utils, defaultDesktop })
+
+
+function getPanelColorChangeCommand({ red, green, blue, hue }) {
+	return `/usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue}; /usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-2/background-rgba -t double -s ${red} -t double -s ${green} -t double -s ${blue} -t double -s ${hue};`
+}
+
+function getPanelChangeCommands() {
+	const defaultPanelColors = { red: 0.298420, green: 0.034444, blue: 0.516667, hue: 1.000000 };
+	const workPanelColors = { red: 0.116667, green: 0.116667, blue: 0.116667, hue: 1.000000 }
+	const hiddenPanelColors = { red: 0.937255, green: 0.243137, blue: 0.333333, hue: 1.000000 };
+
+	const normalRowAndLenghtCommmand = `/usr/bin/xfconf-query  -c xfce4-panel -p /panels/panel-1/nrows -s 1; /usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-1/size -s 50;`
+	const hiddenRowAndLenghtCommmand = `/usr/bin/xfconf-query  -c xfce4-panel -p /panels/panel-1/nrows -s 3; /usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-1/size -s 35;`
+
+	return {
+		[defaultDesktop]: `${normalRowAndLenghtCommmand} ${getPanelColorChangeCommand(defaultPanelColors)}`,
+
+		[workDesktop]: `${normalRowAndLenghtCommmand} ${getPanelColorChangeCommand(workPanelColors)}`,
+
+		[hiddenDesktop]: `${hiddenRowAndLenghtCommmand} ${getPanelColorChangeCommand(hiddenPanelColors)}`,
+	}
+}
+
+function ensureCorrectDesktopPanelColor(options = [], workerData) {
+	// utils.functions.runCommand(`notify-send ${workerData}`);
+
+
+	let previousDesktop = false;
+	let currentDesktop;
+	const panelCommands = getPanelChangeCommands()
+
+	// freeMemory();
+	// freeMemory = undefined
+
+	//infinite loop to monitor current desktop
+	while (true) {
+
+		currentDesktop = execFileSync('/usr/bin/xdotool get_desktop', { shell: '/bin/sh', encoding: "utf8" }).trim();
+
+		//if first iteration, set color according to currentDesktop variable
+		if (previousDesktop === false) {
+			//set background
+			execFileSync(`sh -c "${panelCommands[currentDesktop]}" > /dev/null 2>&1;`, { shell: '/bin/sh', stdio: 'ignore' })
+			previousDesktop = currentDesktop;
+		}
+
+		if (currentDesktop !== previousDesktop) {
+			execFileSync(`sh -c "${panelCommands[currentDesktop]}" > /dev/null 2>&1;`, { shell: '/bin/sh', stdio: 'ignore' })
+			previousDesktop = currentDesktop
+		}
+
+		execFileSync(`sleep 0.06 > /dev/null 2>&1;`, { shell: '/bin/sh', env: {}, stdio: 'ignore' })
+	}
+}
+
+module.exports.ensureCorrectDesktopPanelColor = ensureCorrectDesktopPanelColor;
+
+// ensureCorrectDesktopPanelColor();
