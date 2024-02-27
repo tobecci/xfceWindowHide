@@ -1,3 +1,6 @@
+import { execFile, execFileSync } from "child_process";
+import { logError } from "../core/errorHandler.js";
+
 export function runCommand(command, disableOutput = false) {
 	try {
 		if (disableOutput) {

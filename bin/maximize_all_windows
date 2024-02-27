@@ -1,2 +1,2 @@
 #!/bin/sh
-/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/bin/
+/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/maximizeAllWindows.js   &>/dev/null 2>&1

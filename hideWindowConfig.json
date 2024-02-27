@@ -1,5 +1,99 @@
 {
   "program": "hideWindow",
-  "lastDesktop": "0",
-  "error": []
+  "lastDesktop": "1",
+  "error": [
+    {
+      "message": "Command failed: /usr/bin/xprop -id 0x02e00860 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x2e00860\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n",
+      "stack": "Error: Command failed: /usr/bin/xprop -id 0x02e00860 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x2e00860\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n\n    at genericNodeError (node:internal/errors:984:15)\n    at wrappedFn (node:internal/errors:538:14)\n    at checkExecSyncError (node:child_process:890:11)\n    at execFileSync (node:child_process:926:15)\n    at runCommand (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/utils/cmd.js:9:11)\n    at getLayout (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/windowLayout.js:49:37)\n    at localizeWindows (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/localizeWindows.js:23:18)\n    at startWindowLocalizer (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/localizer.js:8:9)",
+      "timestamp": "Tue Feb 27 2024 - 1:21:30 AM"
+    },
+    {
+      "message": "Command failed: /usr/bin/xprop -id 0x0081716f WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x81716f\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n",
+      "stack": "Error: Command failed: /usr/bin/xprop -id 0x0081716f WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x81716f\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n\n    at genericNodeError (node:internal/errors:984:15)\n    at wrappedFn (node:internal/errors:538:14)\n    at checkExecSyncError (node:child_process:890:11)\n    at execFileSync (node:child_process:926:15)\n    at runCommand (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/utils/cmd.js:9:11)\n    at getLayout (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/windowLayout.js:49:37)\n    at localizeWindows (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/localizeWindows.js:23:18)\n    at startWindowLocalizer (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/localizer.js:8:9)",
+      "timestamp": "Tue Feb 27 2024 - 1:35:55 AM"
+    },
+    {
+      "message": "Command failed: /usr/bin/xprop -id 0x00801e37 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x801e37\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n",
+      "stack": "Error: Command failed: /usr/bin/xprop -id 0x00801e37 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x801e37\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n\n    at genericNodeError (node:internal/errors:984:15)\n    at wrappedFn (node:internal/errors:538:14)\n    at checkExecSyncError (node:child_process:890:11)\n    at execFileSync (node:child_process:926:15)\n    at runCommand (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/utils/cmd.js:9:11)\n    at getLayout (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/windowLayout.js:49:37)\n    at localizeWindows (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/localizeWindows.js:23:18)\n    at startWindowLocalizer (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/localizer.js:8:9)",
+      "timestamp": "Tue Feb 27 2024 - 2:16:14 AM"
+    },
+    {
+      "message": "Command failed: /usr/bin/xprop -id 0x05e00007 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x5e00007\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n",
+      "stack": "Error: Command failed: /usr/bin/xprop -id 0x05e00007 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x5e00007\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n\n    at genericNodeError (node:internal/errors:984:15)\n    at wrappedFn (node:internal/errors:538:14)\n    at checkExecSyncError (node:child_process:890:11)\n    at execFileSync (node:child_process:926:15)\n    at runCommand (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/utils/cmd.js:9:11)\n    at getLayout (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/windowLayout.js:49:37)\n    at localizeWindows (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/localizeWindows.js:23:18)\n    at startWindowLocalizer (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/localizer.js:8:9)",
+      "timestamp": "Tue Feb 27 2024 - 2:21:12 AM"
+    },
+    {
+      "message": "Command failed: /usr/bin/xprop -id 0x06a00003 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x6a00003\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n",
+      "stack": "Error: Command failed: /usr/bin/xprop -id 0x06a00003 WM_CLASS\nX Error of failed request:  BadWindow (invalid Window parameter)\n  Major opcode of failed request:  20 (X_GetProperty)\n  Resource id in failed request:  0x6a00003\n  Serial number of failed request:  13\n  Current serial number in output stream:  13\n\n    at genericNodeError (node:internal/errors:984:15)\n    at wrappedFn (node:internal/errors:538:14)\n    at checkExecSyncError (node:child_process:890:11)\n    at execFileSync (node:child_process:926:15)\n    at runCommand (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/utils/cmd.js:9:11)\n    at getLayout (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/windowLayout.js:49:37)\n    at localizeWindows (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/localizeWindows.js:23:18)\n    at startWindowLocalizer (file:///home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/localizer.js:8:9)",
+      "timestamp": "Tue Feb 27 2024 - 2:21:15 AM"
+    }
+  ],
+  "layoutCollapsed": [
+    {
+      "windowId": "0x01208f62",
+      "windowName": "scrot - Thunar",
+      "windowClass": "\"Thunar\", \"Thunar\"",
+      "desktop": "0"
+    },
+    {
+      "windowId": "0x0380002c",
+      "windowName": "🟨 MTN Mobile WiFi MF927U — Mozilla Firefox",
+      "windowClass": "\"Navigator\", \"firefox\"",
+      "desktop": "2"
+    },
+    {
+      "windowId": "0x03a0002c",
+      "windowName": "🟩 (44) WhatsApp — Mozilla Firefox",
+      "windowClass": "\"Navigator\", \"firefox\"",
+      "desktop": "0"
+    },
+    {
+      "windowId": "0x03a00039",
+      "windowName": "🟩 ChatGPT — Mozilla Firefox",
+      "windowClass": "\"Navigator\", \"firefox\"",
+      "desktop": "0"
+    },
+    {
+      "windowId": "0x03a000be",
+      "windowName": "🟩 I love the German language 🇩🇪 | Instagram — Mozilla Firefox",
+      "windowClass": "\"Navigator\", \"firefox\"",
+      "desktop": "0"
+    },
+    {
+      "windowId": "0x03c00003",
+      "windowName": "Insomnium",
+      "windowClass": "\"insomnium\", \"Insomnium\"",
+      "desktop": "1"
+    },
+    {
+      "windowId": "0x03e0002c",
+      "windowName": "⬜️ psquare best old solgs - Google Search — Mozilla Firefox",
+      "windowClass": "\"Navigator\", \"firefox\"",
+      "desktop": "0"
+    },
+    {
+      "windowId": "0x04c00003",
+      "windowName": "scrotScreenshotRegion - .scripts - Visual Studio Code",
+      "windowClass": "\"code\", \"Code\"",
+      "desktop": "1"
+    },
+    {
+      "windowId": "0x04c00024",
+      "windowName": "localizer.js - xfceWindowHide - Visual Studio Code",
+      "windowClass": "\"code\", \"Code\"",
+      "desktop": "1"
+    },
+    {
+      "windowId": "0x04c00031",
+      "windowName": "gtk.css - gtk-3.0 - Visual Studio Code",
+      "windowClass": "\"code\", \"Code\"",
+      "desktop": "1"
+    },
+    {
+      "windowId": "0x04c00033",
+      "windowName": ".zsh_history - Visual Studio Code",
+      "windowClass": "\"code\", \"Code\"",
+      "desktop": "1"
+    }
+  ]
 }
