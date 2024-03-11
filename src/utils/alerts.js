@@ -1,11 +1,11 @@
-import { commandFullPaths, timeInMilliSeconds as notificationExpireTime } from "../constants.js";
+import { commandFullPaths, timeInMilliSeconds as notificationExpireTime, APP_NAME, notificationId } from "../constants.js";
 import { runCommand } from "./cmd.js";
 
 export async function sendNotification(message, timeInMilliSeconds = false) {
 	if (timeInMilliSeconds) {
-		runCommand(`${commandFullPaths.notifySend} '${message}' -t ${notificationExpireTime}`, true)
+		runCommand(`${commandFullPaths.notifySend} '${APP_NAME}' '${message}' -t ${timeInMilliSeconds}  --replace-id ${notificationId}`, true)
 	} else {
-		runCommand(`${commandFullPaths.notifySend} '${message}' -t ${notificationExpireTime}`, true)
+		runCommand(`${commandFullPaths.notifySend} '${APP_NAME}' '${message}' -t ${notificationExpireTime} --replace-id ${notificationId}`, true)
 		return;
 	}
 }

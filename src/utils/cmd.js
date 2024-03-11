@@ -5,6 +5,7 @@ export function runCommand(command, disableOutput = false) {
 	try {
 		if (disableOutput) {
 			execFile(command, { shell: '/bin/sh' })
+			return;
 		} else {
 			return execFileSync(command, { shell: '/bin/sh', encoding: 'utf-8' }).trim();
 		}

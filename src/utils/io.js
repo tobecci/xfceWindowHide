@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
-import { configFile } from "../constants.js";
+import { configFile, errorFile } from "../constants.js";
 
 export function getConfigData() {
 	let fileData = readFileSync(configFile, { encoding: 'utf8' })
@@ -8,6 +8,12 @@ export function getConfigData() {
 
 export function updateConfigData(data) {
 	writeFileSync(configFile, JSON.stringify(data, null, 2))
+}
+
+export function writeErrorToFile(errorData){
+	let fileData = readFileSync(errorFile, { encoding: 'utf8' })
+	fileData = `${fileData} \n \n \n \n ${JSON.stringify(errorData)}`;
+	writeFileSync(errorFile, fileData)
 }
 
 export function updateConfigField(fieldName, data) {

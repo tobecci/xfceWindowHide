@@ -1,6 +1,6 @@
-import { defaultDesktop, workDesktop, hiddenDesktop, commandFullPaths } from "../constants.js"
+import { workDesktop, hiddenDesktop, commandFullPaths } from "../constants.js"
 import { runCommand } from "../utils/cmd.js"
-import { getConfigData, updateConfigData, updateConfigField } from "../utils/io.js"
+import { getConfigData, updateConfigData } from "../utils/io.js"
 import { sendNotification } from "../utils/alerts.js"
 import { logError } from "./errorHandler.js"
 
@@ -17,8 +17,9 @@ function decideIndex(obj) {
 
 export function getLayout(collapsed = false) {
 	const windowsToIgnore = ['xfce4-panel', 'Desktop', 'xfce4-notifyd']
-	const desktopTable = { [defaultDesktop]: {}, [workDesktop]: {}, [hiddenDesktop]: {}, }
+	const desktopTable = { [workDesktop]: {}, [hiddenDesktop]: {}, }
 	const desktopTableArray = []
+	const hostname = runCommand('/usr/bin/hostname');
 
 	let data = runCommand(`${commandFullPaths.wmctrl} -l -G | sort -n -k4`)
 	let lines = data.split("\n")
@@ -28,7 +29,6 @@ export function getLayout(collapsed = false) {
 	for (let key in lines) {
 		try {
 			const currentLine = lines[key]
-			const hostname = runCommand('/usr/bin/hostname');
 			const regex = RegExp(`(?<=${hostname}\\s+).*`)
 			const windowNameSearchResult = currentLine.match(regex);
 			let windowName = false;
@@ -38,7 +38,6 @@ export function getLayout(collapsed = false) {
 
 			windowName = windowNameSearchResult ? windowNameSearchResult[0] : false;
 
-			console.log(windowName);
 			if (windowsToIgnore.includes(windowName) || !windowName) {
 				continue
 			}
@@ -73,10 +72,10 @@ export function getLayout(collapsed = false) {
 
 
 	if (collapsed) {
-		updateConfigField('layoutCollapsed', desktopTableArray)
+		// updateConfigField('layoutCollapsed', desktopTableArray)
 		return desktopTableArray;
 	} else {
-		updateConfigField('layout', desktopTable)
+		// updateConfigField('layout', desktopTable)
 		return desktopTable;
 	}
 }
@@ -122,17 +121,17 @@ export function updateCurrentAsLastDesktop(activeDesktop) {
 	updateConfigData(config)
 }
 
-export function hideWindowById(windowId) {
-	const command = `${commandFullPaths.wmctrl} -i -r '${windowId}' -t ${hiddenDesktop}`
-	runCommand(command, true);
+export function getHideWindowByIdCommand(windowId) {
+	const command = `${commandFullPaths.wmctrl} -i -r '${windowId}' -t ${hiddenDesktop}`;
+	return command;
 }
 
-export function unhideWindowById(windowId, desktopToRestoreTo) {
-	const command = `${commandFullPaths.wmctrl} -i -r '${windowId}' -t ${desktopToRestoreTo}`
-	runCommand(command, true);
+export function getUnhideWindowByIdCommand(windowId) {
+	const command = `${commandFullPaths.wmctrl} -i -r '${windowId}' -t ${workDesktop}`
+	return command;
 }
 
-export function maximizeSingleWindowById(id) {
+export function getMaximizeSingleWindowByIdCommand(id) {
 	// const commandToFocusWindow = `${commandFullPaths.wmctrl} -i -a ${id}`
 	// utils.functions.runCommand(commandToFocusWindow, true)
 	const commandToUnMaximize = `${commandFullPaths.wmctrl} -i -r ${id} -b remove,maximized_vert,maximized_horz`
@@ -140,7 +139,7 @@ export function maximizeSingleWindowById(id) {
 	const commandToMaximize = `${commandFullPaths.wmctrl} -i -r ${id} -b add,maximized_vert,maximized_horz`
 	// utils.functions.runCommand(commandToMaximize)
 
-	runCommand(`${commandToUnMaximize} && ${commandToMaximize}`, true)
+	return `${commandToUnMaximize} && ${commandToMaximize}`;
 }
 
 export function resolveWindowPosition(windowId, desktopId) {

@@ -1,28 +1,28 @@
 import { getLayout } from "../windowLayout.js"
-import { defaultDesktop, workDesktop, hiddenDesktop, commandFullPaths } from "../../constants.js"
+import { workDesktop, hiddenDesktop, commandFullPaths } from "../../constants.js"
 import { execFile } from "child_process"
 import { sendNotification } from "../../utils/alerts.js"
 import { logError } from "../errorHandler.js"
 
 const windowTitlePatternDesktopMap = {
-	'mtn': hiddenDesktop,
 	'🟨': hiddenDesktop,
-	'⬜️': defaultDesktop,
-	'🟩': defaultDesktop
+	'⬜️': hiddenDesktop,
+	'🟩': workDesktop
 }
 
 const windowClassPatternDesktopMap = {
 	'insomnium': workDesktop,
+	'code': workDesktop,
 	'bitwarden': hiddenDesktop,
 	'trilium notes': hiddenDesktop,
-	'code': workDesktop
+	'rhythmbox': hiddenDesktop
 }
 
 export async function localizeWindows() {
 	try {
 		const layout = getLayout(true)
 		const defaultCommand = 'echo start'
-
+		let numberOfWindowsLocalized = 0;
 
 		let commandToRun = `${defaultCommand}`;
 
@@ -36,11 +36,10 @@ export async function localizeWindows() {
 				const isInWrongDesktop = windowTitlePatternDesktopMap[titleIndex] !== iterationWindowDesktop;
 				const match = iterationWindowTitle.match(RegExp(`${titleIndex}`, 'gi'))
 
-				// console.log({ isInWrongDesktop, data: windowTitlePatternDesktopMap[titleIndex] })
 
 				if (match && isInWrongDesktop) {
-					// console.log({ titleIndex, match, iterationWindowTitle })
 					commandToRun = `${commandToRun} && ${commandFullPaths.wmctrl} -i -r '${iterationWindowId}' -t ${windowTitlePatternDesktopMap[titleIndex]}`;
+					numberOfWindowsLocalized++;
 				}
 			}
 
@@ -49,6 +48,7 @@ export async function localizeWindows() {
 				const isInWrongDesktop = windowClassPatternDesktopMap[classIndex] !== iterationWindowDesktop;
 				if (match && isInWrongDesktop) {
 					commandToRun = `${commandToRun} && ${commandFullPaths.wmctrl} -i -r '${iterationWindowId}' -t ${windowClassPatternDesktopMap[classIndex]}`;
+					numberOfWindowsLocalized++;
 				}
 			}
 		}
@@ -56,11 +56,12 @@ export async function localizeWindows() {
 		//added all the window movement commands
 
 		if (commandToRun === defaultCommand) {
+			sendNotification(`nothing was done`)
 			return;
 		} else {
+			sendNotification(`${numberOfWindowsLocalized} windows were localized`);
 			//run command
 			execFile(commandToRun, { shell: '/bin/sh', stdio: 'ignore' })
-
 		}
 	} catch (error) {
 		sendNotification('an error occured in localize windows');

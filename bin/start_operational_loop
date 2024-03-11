@@ -1,2 +1,4 @@
 #!/bin/sh
-/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/startOperationalLoop.js &>/dev/null 2>&1
+# /usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/startOperationalLoop.js  > /dev/null 2>&1 
+/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/workers/startOperationalLoop.js  >> /home/tobecci/Documents/dev/scripts/xfceWindowHide/cache/logfile
+

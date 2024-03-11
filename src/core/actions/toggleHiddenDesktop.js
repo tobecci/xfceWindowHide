@@ -1,6 +1,5 @@
-import { getActiveDesktop, updateCurrentAsLastDesktop } from "../windowLayout.js";
-import { getConfigData } from "../../utils/io.js";
-import { commandFullPaths, hiddenDesktop } from "../../constants.js";
+import { getActiveDesktop } from "../windowLayout.js";
+import { commandFullPaths, hiddenDesktop, workDesktop } from "../../constants.js";
 import { runCommand } from "../../utils/cmd.js";
 
 function toggleHiddenDesktop() {
@@ -8,14 +7,9 @@ function toggleHiddenDesktop() {
 	const currentDesktop = getActiveDesktop();
 
 	if (currentDesktop === hiddenDesktop) {
-		const config = getConfigData()
-		//swtich to last desktop
-		runCommand(`${commandFullPaths.wmctrl} -s ${config['lastDesktop']}`, true)
+		runCommand(`${commandFullPaths.wmctrl} -s ${workDesktop}`, true)
 		return
 	} else {
-		//go to hidden desktop
-		updateCurrentAsLastDesktop(currentDesktop)
-		// playNotificationSound({ numberOfTimes: 1, soundType: 'error' })
 		runCommand(`${commandFullPaths.wmctrl} -s ${hiddenDesktop}`, true)
 		return
 	}

@@ -6,7 +6,7 @@ async function startWindowLocalizer() {
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		await localizeWindows();
-		await sleep(3000)
+		await sleep(9000)
 	}
 }
 
