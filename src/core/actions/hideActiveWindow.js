@@ -8,13 +8,13 @@ function hideActiveWindow() {
 	if (getActiveDesktop() === hiddenDesktop) {
 		runCommand(`${commandFullPaths.wmctrl} -i -r '${getActiveWindowId()}' -t '${workDesktop}'`, true);
 		sendNotification(`☀️ active window RESTORED ☀️`)
-
 		// playNotificationSound({ numberOfTimes: 1, soundType: 'success' });
 	} else {
 		//else, hide
 		runCommand(`${commandFullPaths.wmctrl} -i -r '${getActiveWindowId()}' -t '${hiddenDesktop}'`, true);
 		sendNotification(`🌥️ active window HIDDEN 🌥️`)
 	}
+	process.exit();
 }
 
 hideActiveWindow()

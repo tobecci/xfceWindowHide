@@ -3,9 +3,10 @@ import { sendNotification } from '../src/utils/alerts.js'
 let lockKeyIsActive = false;
 let redShiftIsOn = false;
 let message = ""
-const notificationName = "Lock Key Phobia"
 const notificationId = 7069
-const notificationTimeInMilliseconds=500
+const notificationTimeInMilliseconds=1000
+
+const timeIntervalInMilliseconds = 300;
 
 const enableRedshift = '/usr/bin/redshift -O 1500 -P > /dev/null 2>&1'
 const disableRedShift = '/usr/bin/redshift -x > /dev/null 2>&1'
@@ -13,7 +14,8 @@ const disableRedShift = '/usr/bin/redshift -x > /dev/null 2>&1'
 function performGeneralOperations() {
 	try {
 		if (lockKeyIsActive) {
-			const commandToSendNotification = `/usr/bin/notify-send "${notificationName}" "${message}" --replace-id ${notificationId} -t ${notificationTimeInMilliseconds}`
+			// const commandToSendNotification = `/usr/bin/notify-send "${notificationName}" "${message}" --replace-id ${notificationId} -t ${notificationTimeInMilliseconds}`
+			const commandToSendNotification = `/usr/bin/notify-send "${message}" --replace-id ${notificationId} -t ${notificationTimeInMilliseconds}`
 			const commandToRun = `${enableRedshift}; ${commandToSendNotification}`;
 			execFileSync(commandToRun, { shell: '/bin/sh', stdio: 'ignore' })
 			redShiftIsOn = true;
@@ -41,14 +43,14 @@ function isLockKeyActive() {
 		let capsLockMatch = result.match(/Caps Lock:[\s]{1,6}on/gi)
 		if (capsLockMatch) {
 			lockKeyIsActive = true;
-			message = "🔒️🔠 caps lock is active, disable it 🔠🔒️"
+			message = "🔒️🔒️ CAPS 🔒️🔒️"
 			return;
 		}
 
 		let numLockMatch = result.match(/Num Lock:[\s]{1,6}on/gi);
 		if (numLockMatch) {
 			lockKeyIsActive = true;
-			message = "🔒️🔢 num lock is active, disable it 🔢🔒️"
+			message = "🔒️ NUM 🔒️"
 			return;
 		}
 		lockKeyIsActive = false
@@ -58,5 +60,5 @@ function isLockKeyActive() {
 	}
 }
 
-setInterval(isLockKeyActive, 200);
+setInterval(isLockKeyActive, timeIntervalInMilliseconds);
 

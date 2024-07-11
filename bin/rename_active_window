@@ -1,2 +1,4 @@
 #!/bin/sh
+/home/tobecci/.scripts/redshift/blink/once &
+
 /usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/renameActiveWindow.js  > /dev/null 2>&1 &
