@@ -27,11 +27,10 @@ function getPanelColorChangeCommand(desktopNumber) {
 
 
 
-	const setPanelColor = `/usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-2/background-rgba -t double -s ${configOptionMap[desktopNumber].bgColor.red} -t double -s ${configOptionMap[desktopNumber].bgColor.green} -t double -s ${configOptionMap[desktopNumber].bgColor.blue} -t double -s ${configOptionMap[desktopNumber].bgColor.hue}`
-	const showLabels = `/usr/bin/xfconf-query -c xfce4-panel -p /plugins/plugin-2/show-labels -s ${configOptionMap[desktopNumber].labels}`
+	const setPanelColor = `/usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-1/background-rgba -t double -s ${configOptionMap[desktopNumber].bgColor.red} -t double -s ${configOptionMap[desktopNumber].bgColor.green} -t double -s ${configOptionMap[desktopNumber].bgColor.blue} -t double -s ${configOptionMap[desktopNumber].bgColor.hue}`
 	const numberOfRows = `/usr/bin/xfconf-query -c xfce4-panel -p /panels/panel-1/nrows -s ${configOptionMap[desktopNumber].nrows}`
 
-	return `${showLabels} && ${setPanelColor} && ${numberOfRows}`
+	return `${setPanelColor} && ${numberOfRows}`
 }
 
 export function getPanelChangeCommands() {

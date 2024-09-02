@@ -1,2 +1,2 @@
 #!/bin/sh
-/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/bin/
+/home/tobecci/.nvm/versions/node/v18.20.4/bin/node /home/tobecci/dev/scripts/xfceWindowHide/bin/

@@ -1,4 +1,4 @@
 #!/bin/sh
 /home/tobecci/.scripts/redshift/blink/once &
 
-/usr/bin/node /home/tobecci/Documents/dev/scripts/xfceWindowHide/src/core/actions/maximizeAllWindows.js    > /dev/null 2>&1 &
+/home/tobecci/.nvm/versions/node/v18.20.4/bin/node /home/tobecci/dev/scripts/xfceWindowHide/src/core/actions/maximizeAllWindows.js    > /dev/null 2>&1 &

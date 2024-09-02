@@ -1,3 +1,5 @@
+#!/usr/bin/env /home/tobecci/.nvm/versions/node/v18.20.4/bin/node
+
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { sendNotification } from '../src/utils/alerts.js'
@@ -12,16 +14,19 @@ const workerPaths = {
 	mediaPlayingKeepAlive: resolve(currentDirectory, 'mediaPlayingKeepAlive.js'),
 	pacmanRunningKeepAlive: resolve(currentDirectory, 'pacmanRunningKeepAlive.js'),
 	ensureManualPresentationActive: resolve(currentDirectory, 'ensureManualPresentationActive.js'),
+	notifyOnDesktopChange: resolve(currentDirectory, 'notifyOnDesktopChange.js'),
 }
 
 function startOperationalLoop() {
+	console.log('started operational loop')
 	try {
 		if (isMainThread) {
-			new Worker(workerPaths.ensureDesktopAppearance)
+			// new Worker(workerPaths.ensureDesktopAppearance)
 			new Worker(workerPaths.lockPhobia)
-			// new Worker(workerPaths.mediaPlayingKeepAlive)
-			// new Worker(workerPaths.pacmanRunningKeepAlive)
-			// new Worker(workerPaths.ensureManualPresentationActive)
+			new Worker(workerPaths.mediaPlayingKeepAlive)
+			new Worker(workerPaths.pacmanRunningKeepAlive)
+			new Worker(workerPaths.ensureManualPresentationActive)
+			new Worker(workerPaths.notifyOnDesktopChange)
 		} else {
 			return;
 		}

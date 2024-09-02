@@ -1,10 +1,10 @@
 export const APP_NAME = 'personal window manager';
 
-export const configFile = '/home/tobecci/Documents/dev/scripts/xfceWindowHide/hideWindowConfig.json';
+export const configFile = '/home/tobecci/dev/scripts/xfceWindowHide/hideWindowConfig.json';
 
-export const errorFile = '/home/tobecci/Documents/dev/scripts/xfceWindowHide/cache/logfile';
+export const errorFile = '/home/tobecci/dev/scripts/xfceWindowHide/cache/logfile';
 
-export const persistentWindowNamesFile = '/home/tobecci/Documents/dev/scripts/xfceWindowHide/cache/persistentWindowNames.json'
+export const persistentWindowNamesFile = '/home/tobecci/dev/scripts/xfceWindowHide/cache/persistentWindowNames.json'
 
 //desktop names
 export const workDesktop = '0'
