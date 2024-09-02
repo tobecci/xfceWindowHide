@@ -7,7 +7,7 @@ const panelCommands = getPanelChangeCommands();
 let previousDesktop = false;
 let currentDesktop = execFileSync('/usr/bin/xdotool get_desktop', { shell: '/bin/sh', encoding: "utf8" }).trim();
 
-const timeIntervalInMilliseconds = 5000;
+const timeIntervalInMilliseconds = 1000;
 
 function getPanelColorChangeCommand(desktopNumber) {
 	const configOptionMap = {

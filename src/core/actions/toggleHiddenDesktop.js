@@ -12,7 +12,7 @@ function changePanelAppearance(currentDesktop) {
 	}
 	const panelChangeCommands = getPanelChangeCommands();
 	console.log({ panelChangeCommands })
-	runCommand(panelChangeCommands[destinationMap[currentDesktop]], true);
+	// runCommand(panelChangeCommands[destinationMap[currentDesktop]], true);
 	return;
 }
 

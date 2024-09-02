@@ -21,7 +21,7 @@ function startOperationalLoop() {
 	console.log('started operational loop')
 	try {
 		if (isMainThread) {
-			// new Worker(workerPaths.ensureDesktopAppearance)
+			new Worker(workerPaths.ensureDesktopAppearance)
 			new Worker(workerPaths.lockPhobia)
 			new Worker(workerPaths.mediaPlayingKeepAlive)
 			new Worker(workerPaths.pacmanRunningKeepAlive)
